@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ ! -z "INIT_DATABASE" ]; then
+    /opt/tracker/bin/roundup-admin -i /opt/tracker/python-dev init admin
+fi
+
+exec /opt/tracker/bin/roundup-server -n 0.0.0.0 -p 9999 python-dev=/opt/tracker/python-dev

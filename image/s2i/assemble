@@ -1,0 +1,18 @@
+#!/bin/bash
+
+pushd /opt/tracker > /dev/null
+
+echo "---> Downloading roundup sources ..."
+ROUNDUP_REPOSITORY=${ROUNDUP_REPOSITORY:-https://hg.python.org/tracker/roundup}
+hg clone "${ROUNDUP_REPOSITORY}" roundup/
+pushd roundup/ > /dev/null
+hg up bugs.python.org
+popd > /dev/null
+
+echo "---> Downloading python-dev sources ..."
+PYTHONDEV_REPOSITORY=${PYTHONDEV_REPOSITORY:-https://hg.python.org/tracker/python-dev}
+hg clone "${PYTHONDEV_REPOSITORY}" python-dev/
+
+echo "---> All downloads finished successfully."
+popd > /dev/null
+
