@@ -3,7 +3,7 @@ FROM debian:9
 # This image exposes port 9999 where roundup is being served from
 EXPOSE 9999
 
-# Set labels needed for S2I to work and general information
+# Set labels needed for S2I to work as well as general information about the image
 LABEL io.openshift.s2i.scripts-url=image:///opt/tracker/s2i \
       summary="bugs.python.org builder image" \
       maintainer="Maciej Szulik <soltysh@gmail.com>"
