@@ -2,16 +2,25 @@
 
 pushd /opt/tracker > /dev/null
 
-echo "---> Downloading roundup sources ..."
 ROUNDUP_REPOSITORY=${ROUNDUP_REPOSITORY:-https://hg.python.org/tracker/roundup}
+echo "---> Downloading roundup sources from ${ROUNDUP_REPOSITORY} ..."
 hg clone "${ROUNDUP_REPOSITORY}" roundup/
 pushd roundup/ > /dev/null
-hg up bugs.python.org
+hg update bugs.python.org
 popd > /dev/null
 
-echo "---> Downloading python-dev sources ..."
 PYTHONDEV_REPOSITORY=${PYTHONDEV_REPOSITORY:-https://hg.python.org/tracker/python-dev}
+echo "---> Downloading python-dev sources from ${PYTHONDEV_REPOSITORY} ..."
 hg clone "${PYTHONDEV_REPOSITORY}" python-dev/
+
+echo "---> Configuring the environment..."
+mkdir python-dev/db/
+chmod -R og+rwx python-dev/db/
+mkdir -p config/detectors/
+cp python-dev/config.ini.template config/config.ini
+cp python-dev/detectors/config.ini.template config/detectors/config.ini
+ln -s /opt/tracker/config/config.ini /opt/tracker/python-dev/config.ini
+ln -s /opt/tracker/config/detectors/config.ini /opt/tracker/python-dev/detectors/config.ini
 
 echo "---> All downloads finished successfully."
 popd > /dev/null
