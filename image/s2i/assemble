@@ -15,12 +15,12 @@ hg clone "${PYTHONDEV_REPOSITORY}" python-dev/
 
 echo "---> Configuring the environment..."
 mkdir python-dev/db/
-chmod -R og+rwx python-dev/db/
 mkdir -p config/detectors/
 cp python-dev/config.ini.template config/config.ini
 cp python-dev/detectors/config.ini.template config/detectors/config.ini
 ln -s /opt/tracker/config/config.ini /opt/tracker/python-dev/config.ini
 ln -s /opt/tracker/config/detectors/config.ini /opt/tracker/python-dev/detectors/config.ini
+chmod -R og+rwx python-dev/
 
 echo "---> All downloads finished successfully."
 popd > /dev/null
