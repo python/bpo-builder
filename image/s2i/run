@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ! -z "INIT_DATABASE" ]; then
+if [ ! -z "$INIT_DATABASE" ]; then
     /opt/tracker/bin/roundup-admin -i /opt/tracker/python-dev init admin
 fi
 
