@@ -61,6 +61,21 @@ Usage
   - [Service](https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#services)
   - [Route](https://docs.openshift.org/latest/dev_guide/routes.html)
 
+  **NOTE:** This needs to be performed only when you're using a temporary database.
+
+  Since we need to initiate the database only once, we need to set an environment
+  variable (INIT_DATABASE), to tell the `run` script to do it:
+
+  ```
+  oc set env deploymentconfig/bpo INIT_DATABASE=true
+  ```
+
+  After the initial rollout this value should be cleared out:
+
+  ```
+  oc set env deploymentconfig/bpo INIT_DATABASE-
+  ```
+
 4. Edit config/roundup.ini and change the line:
 
   ```
