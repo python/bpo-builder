@@ -28,10 +28,6 @@ objects:
           from:
             kind: ImageStreamTag
             name: bpo-builder:latest
-          # this is temporary, until it's fixed in the main python-dev repo
-          env:
-          - name: PYTHONDEV_REPOSITORY
-            value: https://soltysh@bitbucket.org/soltysh/python-dev
       output:
         to:
           kind: ImageStreamTag
