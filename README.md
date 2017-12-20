@@ -51,7 +51,7 @@ Usage
 
   ```
   oc new-app \
-      https://raw.githubusercontent.com/soltysh/bpo-builder/master/template.yaml
+      https://raw.githubusercontent.com/python/bpo-builder/master/template.yaml
   ```
 
   This will create the following resources:
@@ -76,7 +76,7 @@ Usage
   oc set env deploymentconfig/bpo INIT_DATABASE-
   ```
 
-4. Edit config/roundup.ini and change the line:
+4. Edit `config/roundup.ini` and change the line:
 
   ```
   web = http://localhost:9999/python-dev/
