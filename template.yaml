@@ -73,6 +73,7 @@ objects:
               name: bpo:latest
         - type: ConfigChange
       replicas: 1
+      revisionHistoryLimit: 1
       selector:
         name: bpo
       template:
