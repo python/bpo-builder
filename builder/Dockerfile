@@ -15,9 +15,9 @@ RUN apt-get update && \
 
 # Copy the necessary S2I scripts and files needed to run roundup
 RUN mkdir -p /opt/tracker/bin && mkdir -p /opt/tracker/s2i
-COPY ./s2i /opt/tracker/s2i
-COPY ./requirements.txt /opt/tracker
-COPY ./bin /opt/tracker/bin
+COPY s2i /opt/tracker/s2i
+COPY requirements.txt /opt/tracker
+COPY bin /opt/tracker/bin
 
 # Install python side of requirements for roundup
 RUN pip install --upgrade pip && \
