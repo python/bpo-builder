@@ -2,6 +2,9 @@
 # Default username for docker registry
 USERNAME ?= python
 
-all:
-	docker build -t $(USERNAME)/bpo-builder image
+builder:
+	docker build -t $(USERNAME)/bpo-builder builder
+.PHONY: builder
+
+all: builder
 .PHONY: all
