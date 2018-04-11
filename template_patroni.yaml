@@ -1,0 +1,213 @@
+#
+# stateful set
+#
+kind: StatefulSet
+apiVersion: apps/v1beta1
+metadata:
+  name: &cluster_name patroni
+  labels:
+    application: patroni
+    cluster-name: *cluster_name
+spec:
+  replicas: 3
+  serviceName: *cluster_name
+  template:
+    metadata:
+      labels:
+        application: patroni
+        cluster-name: *cluster_name
+    spec:
+      serviceAccountName: patroni
+      containers:
+      - name: *cluster_name
+        image: docker.io/python/bpo-patroni
+        # resources:
+        #   limits:
+        #     cpu: 100m
+        ports:
+        - containerPort: 8008
+          protocol: TCP
+        - containerPort: 5432
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/pgdata
+          name: pgdata
+        env:
+        - name: PATRONI_KUBERNETES_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: PATRONI_KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: PATRONI_KUBERNETES_LABELS
+          value: '{application: patroni, cluster-name: patroni}'
+        - name: PATRONI_SUPERUSER_USERNAME
+          value: postgres
+        - name: PATRONI_SUPERUSER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: *cluster_name
+              key: superuser-password
+        - name: PATRONI_REPLICATION_USERNAME
+          value: standby
+        - name: PATRONI_REPLICATION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: *cluster_name
+              key: replication-password
+        - name: PATRONI_SCOPE
+          value: *cluster_name
+        - name: PATRONI_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PATRONI_POSTGRESQL_DATA_DIR
+          value: /opt/pgdata/pgroot/data
+        - name: PATRONI_POSTGRESQL_PGPASS
+          value: /tmp/pgpass
+        - name: PATRONI_POSTGRESQL_LISTEN
+          value: '0.0.0.0:5432'
+        - name: PATRONI_RESTAPI_LISTEN
+          value: '0.0.0.0:8008'
+      terminationGracePeriodSeconds: 0
+      volumes:
+      - name: pgdata
+        emptyDir: {}
+  # volumeClaimTemplates:
+  # - metadata:
+  #     labels:
+  #       application: spilo
+  #       spilo-cluster: *cluster_name
+  #     annotations:
+  #       volume.alpha.kubernetes.io/storage-class: anything
+  #     name: pgdata
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     resources:
+  #       requests:
+  #         storage: 5Gi
+
+---
+#
+# master service
+#
+kind: Service
+apiVersion: v1
+metadata:
+  name: &cluster_name patroni
+  labels:
+    application: patroni
+    cluster-name: *cluster_name
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+#
+# replica service
+#
+kind: Service
+apiVersion: v1
+metadata:
+  name: patroni-repl
+  labels:
+    application: patroni
+    cluster-name: &cluster_name patroni
+spec:
+  type: ClusterIP
+  selector:
+    application: patroni
+    cluster-name: *cluster_name
+    role: replica
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+#
+# secrets (superuser password and replication passwor)
+#
+kind: Secret
+apiVersion: v1
+metadata:
+  name: &cluster_name patroni
+  labels:
+    application: patroni
+    cluster-name: *cluster_name
+type: Opaque
+data:
+  superuser-password: Y2hhbmdlbWUK
+  replication-password: Y2hhbmdlbWUK
+
+---
+#
+# dedicated service account
+#
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: patroni
+
+---
+#
+# dedicated role
+#
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: patroni
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - get
+  - patch
+  - update
+  # the following three privileges are necessary only when using endpoints
+  - create
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
+---
+#
+# bind dedicated role to the service account
+#
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: patroni
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: patroni
+subjects:
+- kind: ServiceAccount
+  name: patroni
