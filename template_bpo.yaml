@@ -1,137 +1,137 @@
-kind: Template
+#
+# build configuration
+#
+kind: BuildConfig
 apiVersion: v1
 metadata:
-  name: bugs.python.org
-  annotations:
-    description: This template contains the build and deployment description to run bugs.python.org on openshift v3
-    iconClass: icon-python
-labels:
-  template: bugs.python.org
-objects:
-  #
-  # build configuration
-  #
-  - kind: BuildConfig
-    apiVersion: v1
+  name: bpo
+  labels:
+    name: bpo
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/soltysh/bpo-builder.git
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: bpo-builder:latest
+  output:
+    to:
+      kind: ImageStreamTag
+      name: bpo:latest
+
+---
+#
+# builder image stream configuration
+#
+kind: ImageStream
+apiVersion: v1
+metadata:
+  name: bpo-builder
+spec:
+  tags:
+  - name: latest
+    from:
+      kind: DockerImage
+      name: python/bpo-builder:latest
+
+---
+#
+# output image stream configuration
+#
+kind: ImageStream
+apiVersion: v1
+metadata:
+  name: bpo
+
+---
+#
+# deployment configuration
+#
+kind: DeploymentConfig
+apiVersion: v1
+metadata:
+  name: bpo
+spec:
+  strategy:
+    type: Rolling
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - bpo
+        from:
+          kind: ImageStreamTag
+          name: bpo:latest
+    - type: ConfigChange
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    name: bpo
+  template:
     metadata:
-      name: bpo
       labels:
         name: bpo
     spec:
-      source:
-        type: Git
-        git:
-          uri: https://github.com/soltysh/bpo-builder.git
-      strategy:
-        type: Source
-        sourceStrategy:
-          from:
-            kind: ImageStreamTag
-            name: bpo-builder:latest
-      output:
-        to:
-          kind: ImageStreamTag
-          name: bpo:latest
-  #
-  # builder image stream configuration
-  #
-  - kind: ImageStream
-    apiVersion: v1
-    metadata:
-      name: bpo-builder
-    spec:
-      tags:
-      - name: latest
-        from:
-          kind: DockerImage
-          name: python/bpo-builder:latest
-  #
-  # output image stream configuration
-  #
-  - kind: ImageStream
-    apiVersion: v1
-    metadata:
-      name: bpo
-  #
-  # deployment configuration
-  #
-  - kind: DeploymentConfig
-    apiVersion: v1
-    metadata:
-      name: bpo
-    spec:
-      strategy:
-        type: Rolling
-      triggers:
-        - type: ImageChange
-          imageChangeParams:
-            automatic: true
-            containerNames:
-              - bpo
-            from:
-              kind: ImageStreamTag
-              name: bpo:latest
-        - type: ConfigChange
-      replicas: 1
-      revisionHistoryLimit: 1
-      selector:
-        name: bpo
-      template:
-        metadata:
-          labels:
-            name: bpo
-        spec:
-          containers:
-            - name: bpo
-              image: bpo
-              ports:
-                - containerPort: 9999
-                  protocol: TCP
-              readinessProbe:
-                httpGet:
-                  path: /python-dev/
-                  port: 9999
-                  scheme: HTTP
-              livenessProbe:
-                tcpSocket:
-                  port: 9999
-              volumeMounts:
-              - name: config
-                mountPath: "/opt/tracker/config"
-                readOnly: true
-          restartPolicy: Always
-          volumes:
+      containers:
+        - name: bpo
+          image: bpo
+          ports:
+            - containerPort: 9999
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /python-dev/
+              port: 9999
+              scheme: HTTP
+          livenessProbe:
+            tcpSocket:
+              port: 9999
+          volumeMounts:
           - name: config
-            secret:
-              secretName: config
-              items:
-              - key: roundup
-                path: config.ini
-              - key: detectors
-                path: detectors/config.ini
-  #
-  # service configuration
-  #
-  - kind: Service
-    apiVersion: v1
-    metadata:
-      name: bpo
-    spec:
-      ports:
-        - name: web
-          protocol: TCP
-          port: 9999
-          targetPort: 9999
-      selector:
-        name: bpo
-  #
-  # route configuration
-  #
-  - kind: Route
-    apiVersion: v1
-    metadata:
-      name: bpo
-    spec:
-      to:
-        kind: Service
-        name: bpo
+            mountPath: "/opt/tracker/config"
+            readOnly: true
+      restartPolicy: Always
+      volumes:
+      - name: config
+        secret:
+          secretName: config
+          items:
+          - key: roundup
+            path: config.ini
+          - key: detectors
+            path: detectors/config.ini
+
+---
+#
+# service configuration
+#
+kind: Service
+apiVersion: v1
+metadata:
+  name: bpo
+spec:
+  ports:
+    - name: web
+      protocol: TCP
+      port: 9999
+      targetPort: 9999
+  selector:
+    name: bpo
+
+---
+#
+# route configuration
+#
+kind: Route
+apiVersion: v1
+metadata:
+  name: bpo
+spec:
+  to:
+    kind: Service
+    name: bpo
