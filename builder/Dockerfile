@@ -20,8 +20,7 @@ COPY requirements.txt /opt/tracker
 COPY bin /opt/tracker/bin
 
 # Install python side of requirements for roundup
-RUN pip install --upgrade pip && \
-    pip install -r /opt/tracker/requirements.txt && \
+RUN pip install -r /opt/tracker/requirements.txt && \
     # we delete the http packages introduced by pyoic. it will fail roundup
     rm -rf /usr/local/lib/python2.7/dist-packages/http
 

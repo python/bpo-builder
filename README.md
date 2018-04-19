@@ -50,8 +50,8 @@ Usage
 3. Now it is time to prepare all the bits necessary to deploy bugs.python.org itself:
 
   ```
-  oc new-app \
-      https://raw.githubusercontent.com/python/bpo-builder/master/template.yaml
+  oc create -f \
+      https://raw.githubusercontent.com/python/bpo-builder/master/template_bpo.yaml
   ```
 
   This will create the following resources:
