@@ -79,20 +79,18 @@ spec:
       volumes:
       - name: pgdata
         emptyDir: {}
-  # volumeClaimTemplates:
-  # - metadata:
-  #     labels:
-  #       application: spilo
-  #       spilo-cluster: *cluster_name
-  #     annotations:
-  #       volume.alpha.kubernetes.io/storage-class: anything
-  #     name: pgdata
-  #   spec:
-  #     accessModes:
-  #     - ReadWriteOnce
-  #     resources:
-  #       requests:
-  #         storage: 5Gi
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        application: patroni
+        cluster-name: *cluster_name
+      name: pgdata
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
 
 ---
 #
