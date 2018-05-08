@@ -28,4 +28,8 @@ postgresql:
       password: ${PATRONI_SUPERUSER_PASSWORD}
 __EOF__
 
+unset PATRONI_SUPERUSER_PASSWORD PATRONI_REPLICATION_PASSWORD
+export KUBERNETES_NAMESPACE=$PATRONI_KUBERNETES_NAMESPACE
+export POD_NAME=$PATRONI_NAME
+
 exec /usr/bin/python /usr/local/bin/patroni "${tmpcfg}"
