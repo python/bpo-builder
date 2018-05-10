@@ -76,9 +76,6 @@ spec:
         - name: PATRONI_RESTAPI_LISTEN
           value: '0.0.0.0:8008'
       terminationGracePeriodSeconds: 0
-      volumes:
-      - name: pgdata
-        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       labels:
