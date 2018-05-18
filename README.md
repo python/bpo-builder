@@ -11,47 +11,77 @@ Usage
   follow the diagnostic messages that appear on the screen, it is probably missing
   packages (eg. docker) or necessary configuration changes.
 
-2. Instantiate a postgresql instance.  For this you can either use the web console
-  or the following command.  With the former make sure to use the exact same values
-  as below command.
+2. Instantiate a postgresql instance.  Depending on your needs there are two possibilies
+  here. You can either proceed with a single development instance (A) or a full HA
+  production one (B).
 
-  ```
-  oc new-app postgresql:9.5 \
-      --name=bpo-db \
-      --labels=app=bugs.python.org \
-      --env=POSTGRESQL_USER=roundup \
-      --env=POSTGRESQL_PASSWORD=roundup \
-      --env=POSTGRESQL_DATABASE=roundup
-  ```
+    A. To deploy single development instance you can either use the web console or
+    the following command.  With the former make sure to use the exact same values
+    as below command.
 
-  This will create the following resources:
-  - [Deployment Configuration](https://docs.openshift.org/latest/dev_guide/deployments/how_deployments_work.html)
-  - [Service](https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#services)
+    ```
+    oc new-app postgresql:9.5 \
+        --name=bpo-db \
+        --labels=app=bugs.python.org \
+        --env=POSTGRESQL_USER=roundup \
+        --env=POSTGRESQL_PASSWORD=roundup \
+        --env=POSTGRESQL_DATABASE=roundup
+    ```
 
-  This deployment configuration will kick of an actual deployment of our postgresql
-  instance which leads to creating a [Replication Controller](https://docs.openshift.org/latest/architecture/core_concepts/deployments.html#replication-controllers)
-  and a [Pod](https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#pods).
+    This will create the following resources:
+    - [Deployment Configuration](https://docs.openshift.org/latest/dev_guide/deployments/how_deployments_work.html)
+    - [Service](https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#services)
 
-  **NOTE:** This setup uses an ephemeral storage, if you want to save your data you
-  should read about [Persistence Volumes](https://docs.openshift.org/latest/dev_guide/persistent_volumes.html).
+    This deployment configuration will kick of an actual deployment of our postgresql
+    instance which leads to creating a [Replication Controller](https://docs.openshift.org/latest/architecture/core_concepts/deployments.html#replication-controllers)
+    and a [Pod](https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#pods).
 
-  When the postgresql instance is up we need to drop the database and allow roundup
-  initialize it from scratch.  To do so invoke the following commands, which will
-  get you connected to bpo-db pod and drop the database and add necessary access
-  rights to create a new one, instead:
+    **NOTE:** This setup uses an ephemeral storage, if you want to save your data you
+    should read about [Persistence Volumes](https://docs.openshift.org/latest/dev_guide/persistent_volumes.html).
 
-  ```
-  oc rsh $(oc get pod -l deploymentconfig=bpo-db -o jsonpath='{.items[*].metadata.name}')
-  # psql
-  # drop database roundup;
-  # alter user roundup createdb;
-  ```
+    When the postgresql instance is up we need to drop the database and allow roundup
+    initialize it from scratch.  To do so invoke the following commands, which will
+    get you connected to bpo-db pod and drop the database and add necessary access
+    rights to create a new one, instead:
+
+    ```
+    oc rsh $(oc get pod -l deploymentconfig=bpo-db -o jsonpath='{.items[*].metadata.name}')
+    # psql
+    # drop database roundup;
+    # alter user roundup createdb;
+    ```
+
+    B. To deploy full HA PostgreSQL using [patroni project](https://github.com/zalando/patroni/)
+    invoke the following command:
+
+    ```
+    oc create -f \
+      https://raw.githubusercontent.com/python/bpo-builder/master/template_patroni.yaml
+    ```
+
+    This will create the following resources:
+    - [Stateful Set](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/)
+    - [Services](https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#services)
+    - [Service Account](https://docs.openshift.org/latest/dev_guide/service_accounts.html)
+    - [Role and RoleBinding](https://kubernetes.io/docs/admin/authorization/rbac/)
+
+    **NOTE:** You should copy the above template file and change `superuser-password`
+    and `replication-password`.  These are `base64` encoded passwords.
+
+    When the postgresql instance is up we need to create user roundup with appropriate
+    password and add it rights to create a database.
+
+    ```
+    oc rsh patroni-0
+    # psql -U postgres
+    # create user roundup with createdb encrypted password 'changeme';
+    ```
 
 3. Now it is time to prepare all the bits necessary to deploy bugs.python.org itself:
 
   ```
   oc create -f \
-      https://raw.githubusercontent.com/python/bpo-builder/master/template_bpo.yaml
+    https://raw.githubusercontent.com/python/bpo-builder/master/template_bpo.yaml
   ```
 
   This will create the following resources:
@@ -64,7 +94,7 @@ Usage
   **NOTE:** This needs to be performed only when you're using a temporary database.
 
   Since we need to initiate the database only once, we need to set an environment
-  variable (INIT_DATABASE), to tell the `run` script to do it:
+  variable (`INIT_DATABASE`), to tell the `run` script to do it:
 
   ```
   oc set env deploymentconfig/bpo INIT_DATABASE=true
