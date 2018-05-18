@@ -10,6 +10,6 @@ builder:
 .PHONY: builder
 
 patroni:
-	./postgresql.sh
+	./patroni/postgresql.sh
 	docker build -t $(PREFIX)/bpo-patroni patroni
 .PHONY: patroni
