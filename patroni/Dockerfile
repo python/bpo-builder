@@ -6,7 +6,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get upgrade -y \
     && apt-get install -y git curl jq python-psycopg2 python-yaml python-requests \
         python-six python-dateutil python-pip python-setuptools python-prettytable \
-        python-wheel python-psutil \python locales openssh-client \
+        python-wheel python-psutil python locales openssh-client \
         gcc build-essential cmake \
 
     # Make sure we have a en_US.UTF-8 locale available
@@ -33,7 +33,7 @@ ENV LC_ALL=en_US.UTF-8 \
     NSS_WRAPPER_PASSWD=/tmp/passwd \
     NSS_WRAPPER_GROUP=/tmp/group
 
-COPY entrypoint.sh nss-wrap.sh /
+COPY entrypoint.sh callback.py nss-wrap.sh /
 
 RUN \
     # create postgresql data directory
@@ -47,12 +47,12 @@ RUN \
     && apt-get remove -y git python-pip python-setuptools git gcc build-essential cmake \
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* /root/.cache
+    && rm -rf /var/lib/apt/lists/* /root/.cache &&
 
-# In order to drop the root user, we have to make some directories world
-# writable as OpenShift default security model is to run the container under
-# random UID.
-RUN chown -R 1001:0 /opt/pgdata && chmod -R og+rwx /opt/pgdata
+    # In order to drop the root user, we have to make some directories world
+    # writable as OpenShift default security model is to run the container under
+    # random UID.
+    && chown -R 1001:0 /opt/pgdata && chmod -R og+rwx /opt/pgdata
 
 USER 1001
 
