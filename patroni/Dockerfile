@@ -47,7 +47,7 @@ RUN \
     && apt-get remove -y git python-pip python-setuptools git gcc build-essential cmake \
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* /root/.cache &&
+    && rm -rf /var/lib/apt/lists/* /root/.cache \
 
     # In order to drop the root user, we have to make some directories world
     # writable as OpenShift default security model is to run the container under
